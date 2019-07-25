@@ -32,8 +32,16 @@ namespace MessageExchange.Publisher
 
         private static void PublishEvent(IModel channel, TestPublishedEvent @event)
         {
+            var properties = channel.CreateBasicProperties();
+            properties.DeliveryMode = 2; // persistent
             Console.WriteLine($"Publishing message: {@event.TestField}");
-            channel.BasicPublish(EXCHANGE_NAME, EVENT_NAME, null, @event.Serialize());
+
+            channel.BasicPublish(
+                        exchange: EXCHANGE_NAME,
+                        routingKey: EVENT_NAME,
+                        mandatory: true,
+                        basicProperties: properties,
+                        body: @event.Serialize());
         }     
     }
 }

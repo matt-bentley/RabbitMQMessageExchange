@@ -11,7 +11,7 @@ namespace MessageExchange.Publisher
             if (obj == null)
                 return null;
             var json = JsonConvert.SerializeObject(obj);
-            return Encoding.ASCII.GetBytes(json);
+            return Encoding.UTF8.GetBytes(json);
         }
     }
 }

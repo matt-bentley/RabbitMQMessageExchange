@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,15 +21,18 @@ namespace MessageExchange.Subscriber
         {
             Console.WriteLine("Starting Subscriber...");
 
-            var task = Task.Factory.StartNew(async () =>
+            var tasks = new List<Task>()
             {
-                await SubscribeAsync();
-            });
-            task.Wait();
+                Task.Factory.StartNew(async () => await SubscribeAsync()),
+                Task.Factory.StartNew(async () => await SubscribeAsync())
+            }.ToArray();
+
+            Task.WaitAll(tasks);
         }
 
         private static async Task SubscribeAsync()
         {
+            string id = Guid.NewGuid().ToString();
             var connectionFactory = Helper.CreateFactory();
             using (var connection = connectionFactory.CreateConnection())
             using (var channel = connection.CreateModel())
@@ -40,9 +44,9 @@ namespace MessageExchange.Subscriber
                 consumer.Received += async (sender, eventArgs) =>
                 {
                     var eventName = eventArgs.RoutingKey;
-                    var json = Encoding.ASCII.GetString(eventArgs.Body);
+                    var json = Encoding.UTF8.GetString(eventArgs.Body);
                     var @event = JsonConvert.DeserializeObject<TestPublishedEvent>(json);
-                    Console.WriteLine($"Processed: {@event.TestField}");
+                    Console.WriteLine($"{id} processed: {@event.TestField}");
 
                     channel.BasicAck(eventArgs.DeliveryTag, multiple: false);
                 };
